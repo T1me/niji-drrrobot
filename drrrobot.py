@@ -148,6 +148,7 @@ class Bot(object):
                 try:
                     give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分',time.localtime(time.time()))
                     self.post('/me %s' % give_time)
+                    self.post(message='本bot的指令大全參見此鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
                     time.sleep(580)
                 except:
                     print '[Err] Give time error at %s' % time.strftime('%Y/%m/%d %H:%M:%S',time.localtime(time.time()))
