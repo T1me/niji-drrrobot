@@ -111,28 +111,28 @@ class Bot(object):
                 talks_update = re.findall('{"id".*?"message":".*?"}', re.search('"talks":.*', ru.text).group(0))
                 for tu in talks_update:
                     message = re.search('"message":".*?"', tu).group(0)[11:-1].decode('unicode_escape').encode('utf-8')
-                    if '!leave' in message:
+                    if '/niji leave' in message:
                         list_id = re.findall('"id":".*?"', tu)
                         if len(list_id) > 2:
                             self.leave_room()
                             return 'leave'
-                    elif '!room sd' in message:
+                    elif '/niji room' in message:
                         list_id = re.findall('"id":".*?"', tu)
                         if len(list_id) > 2:
                             new_hosts_id = list_id[2][6:-1]
                             self.new_host(new_host_id=new_hosts_id)
-                    elif '!m' in message:
-                        if re.findall('!m .*',message):
-                            keyword = re.findall('!m .*',message)[0][3:]
+                    elif '/m' in message:
+                        if re.findall('/m .*',message):
+                            keyword = re.findall('/m .*',message)[0][3:]
                             song = Song(keyword=keyword)
                             search_resp = song.qq_search()
                             if search_resp:
                                 self.share_music(url=song.url_song,name='%s - %s' % (song.name_song,song.artist_song))
                             else:
                                 self.post('穩唔到啊，自己聽罷啦')
-                    elif '!feedback' in message:
-                        if re.findall('!feedback .*',message):
-                            feedback = re.findall('!feedback .*',message)[0][10:]
+                    elif '/feedback' in message:
+                        if re.findall('/feedback .*',message):
+                            feedback = re.findall('/feedback .*',message)[0][10:]
                             f = open('%s.feedback'% time.time(),'w+')
                             f.write(feedback)
                             f.close()
@@ -144,11 +144,13 @@ class Bot(object):
 
     def give_time(self):
         while 1:
-            if time.time() % 600 < 5:
+            timestamp = time.time()
+            if timestamp % 600 < 5:
                 try:
                     give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分',time.localtime(time.time()))
                     self.post('/me %s' % give_time)
-                    self.post(message='本bot的指令大全參見此鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
+                    if timestamp % 1800 < 5:
+                        self.post(message='本bot指令變更，詳見此鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
                     time.sleep(580)
                 except:
                     print '[Err] Give time error at %s' % time.strftime('%Y/%m/%d %H:%M:%S',time.localtime(time.time()))
