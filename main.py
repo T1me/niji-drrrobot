@@ -24,15 +24,15 @@ while 1:
             niji.login()
             niji.save_cookie(file_name=file_name)
             room = niji.room_enter(url_room=url_room)
-            leave = niji.room_update(room_text=room)
-            if leave == 'leave':
+            is_leave = niji.room_update(room_text=room)
+            if is_leave == True:
                 break
         else:
             niji.load_cookie(file_name=file_name)
             room = niji.room_enter(url_room=url_room)
-            leave = niji.room_update(room_text=room)
-            if leave == 'leave':
+            is_leave = niji.room_update(room_text=room)
+            if is_leave == True:
                 break
-        time.sleep(10)
+        time.sleep(5)
     except:
         print '[Err] Room update error at %s' % time.strftime('%Y/%m/%d %H:%M:%S',time.localtime(time.time()))

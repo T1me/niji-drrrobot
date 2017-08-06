@@ -111,33 +111,14 @@ class Bot(object):
                 talks_update = re.findall('{"id".*?"message":".*?"}', re.search('"talks":.*', ru.text).group(0))
                 for tu in talks_update:
                     message = re.search('"message":".*?"', tu).group(0)[11:-1].decode('unicode_escape').encode('utf-8')
-                    if '/niji leave' in message:
-                        list_id = re.findall('"id":".*?"', tu)
-                        if len(list_id) > 2:
-                            self.leave_room()
-                            return 'leave'
-                    elif '/niji room' in message:
-                        list_id = re.findall('"id":".*?"', tu)
-                        if len(list_id) > 2:
-                            new_hosts_id = list_id[2][6:-1]
-                            self.new_host(new_host_id=new_hosts_id)
-                    elif '/m' in message:
-                        if re.findall('/m .*',message):
-                            keyword = re.findall('/m .*',message)[0][3:]
-                            song = Song(keyword=keyword)
-                            search_resp = song.qq_search()
-                            if search_resp:
-                                self.share_music(url=song.url_song,name='%s - %s' % (song.name_song,song.artist_song))
-                            else:
-                                self.post('穩唔到啊，自己聽罷啦')
-                    elif '/feedback' in message:
-                        if re.findall('/feedback .*',message):
-                            feedback = re.findall('/feedback .*',message)[0][10:]
-                            f = open('%s.feedback'% time.time(),'w+')
-                            f.write(feedback)
-                            f.close()
-                    elif '@にじ' in message:
-                        self.post('都唔知你up乜柒')
+                    list_id = re.findall('"id":".*?"', tu)
+                    if len(list_id) > 2:
+                        id_sender = list_id[2][6:-1]
+                        is_leave = self.private_message_handler(message=message,id_sender=id_sender)
+                        if is_leave == True:
+                            return True
+                    else:
+                        self.message_handler(message=message)
             if '"type":"join"' in ru.text:
                 self.post('/me 歡迎光臨，輕食咖啡館')
             ru.close()
@@ -145,15 +126,20 @@ class Bot(object):
     def give_time(self):
         while 1:
             timestamp = time.time()
-            if timestamp % 600 < 5:
-                try:
-                    give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分',time.localtime(time.time()))
-                    self.post('/me %s' % give_time)
+            hour = int(time.strftime('%H',time.localtime(time.time())))
+            try:
+                if 8 < hour < 24:
+                    if timestamp % 600 < 5:
+                        give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分',time.localtime(time.time()))
+                        self.post('/me %s' % give_time)
+                        time.sleep(580)
+                else:
                     if timestamp % 1800 < 5:
-                        self.post(message='本bot指令變更，詳見此鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
-                    time.sleep(580)
-                except:
-                    print '[Err] Give time error at %s' % time.strftime('%Y/%m/%d %H:%M:%S',time.localtime(time.time()))
+                        give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分',time.localtime(time.time()))
+                        self.post('/me %s' % give_time)
+                        time.sleep(1780)
+            except:
+                print '[Err] Give time error at %s' % time.strftime('%Y/%m/%d %H:%M:%S',time.localtime(time.time()))
 
     def tips(self):
         while 1:
@@ -175,3 +161,51 @@ class Bot(object):
                 ]
                 list_tips_index = int(13 * random.random())
                 self.post(list_tips[list_tips_index])
+
+    def message_handler(self,message):
+        if '/m' in message:
+            if re.findall('/m .*', message):
+                keyword = re.findall('/m .*', message)[0][3:]
+                song = Song(keyword=keyword)
+                search_resp = song.qq_search()
+                if search_resp:
+                    self.share_music(url=song.url_song, name='%s - %s' % (song.name_song, song.artist_song))
+                else:
+                    self.post('穩唔到啊，自己聽罷啦')
+        elif '/help' in message:
+            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
+        elif '/feedback' in message:
+            if re.findall('/feedback .*', message):
+                feedback = re.findall('/feedback .*', message)[0][10:]
+                f = open('%s.feedback' % time.time(), 'w+')
+                f.write(feedback)
+                f.close()
+        elif '@にじ' in message:
+            self.post('都唔知你up乜柒')
+
+    def private_message_handler(self,message,id_sender):
+        if '/niji leave' in message:
+            self.leave_room()
+            return True
+        elif '/niji room' in message:
+            self.new_host(new_host_id=id_sender)
+        elif '/m' in message:
+            if re.findall('/m .*', message):
+                keyword = re.findall('/m .*', message)[0][3:]
+                song = Song(keyword=keyword)
+                search_resp = song.qq_search()
+                if search_resp:
+                    self.share_music(url=song.url_song, name='%s - %s' % (song.name_song, song.artist_song))
+                else:
+                    self.post(message='穩唔到啊，自己聽罷啦', to=id_sender)
+        elif '/help' in message:
+            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
+        elif '/feedback' in message:
+            if re.findall('/feedback .*', message):
+                feedback = re.findall('/feedback .*', message)[0][10:]
+                f = open('%s.feedback' % time.time(), 'w+')
+                f.write(feedback)
+                f.close()
+        elif '@にじ' in message:
+            self.post(message='都唔知你up乜柒', to=id_sender)
+        return False
