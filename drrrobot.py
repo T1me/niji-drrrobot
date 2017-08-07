@@ -4,6 +4,9 @@ import time
 import requests
 import re
 import random
+import smtplib
+import email
+from email.mime.text import MIMEText
 
 
 class Song(object):
@@ -114,11 +117,11 @@ class Bot(object):
                     list_id = re.findall('"id":".*?"', tu)
                     if len(list_id) > 2:
                         id_sender = list_id[2][6:-1]
-                        is_leave = self.private_message_handler(message=message,id_sender=id_sender)
+                        is_leave = self.handle_private_message(message=message,id_sender=id_sender)
                         if is_leave == True:
                             return True
                     else:
-                        self.message_handler(message=message)
+                        self.handle_message(message=message)
             if '"type":"join"' in ru.text:
                 self.post('/me 歡迎光臨，輕食咖啡館')
             ru.close()
@@ -162,7 +165,17 @@ class Bot(object):
                 list_tips_index = int(13 * random.random())
                 self.post(list_tips[list_tips_index])
 
-    def message_handler(self,message):
+    def feedback(self,text):
+        mail = MIMEText(text, 'plain', 'utf-8')
+        mail['Subject'] = '使用者反馈'
+        mail['From'] = email.utils.formataddr(['にじ', 'niji_drrrobot@21cn.com'])
+        mail['To'] = email.utils.formataddr(['時光會凝聚嗎', 'willtimecondense@qq.com'])
+        server = smtplib.SMTP(host='smtp.21cn.com', port=25)
+        server.login(user='niji_drrrobot@21cn.com', password='niji1997')
+        server.sendmail(from_addr='niji_drrrobot@21cn.com', to_addrs='willtimecondense@qq.com', msg=mail.as_string())
+        server.quit()
+
+    def handle_message(self,message):
         if '/m' in message:
             if re.findall('/m .*', message):
                 keyword = re.findall('/m .*', message)[0][3:]
@@ -171,19 +184,21 @@ class Bot(object):
                 if search_resp:
                     self.share_music(url=song.url_song, name='%s - %s' % (song.name_song, song.artist_song))
                 else:
-                    self.post('穩唔到啊，自己聽罷啦')
+                    self.post('找不到這首歌啊，點別的吧')
         elif '/help' in message:
             self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
         elif '/feedback' in message:
             if re.findall('/feedback .*', message):
-                feedback = re.findall('/feedback .*', message)[0][10:]
-                f = open('%s.feedback' % time.time(), 'w+')
-                f.write(feedback)
-                f.close()
+                text_feedback = re.findall('/feedback .*', message)[0][10:]
+                try:
+                    self.feedback(text=text_feedback)
+                    self.post('反饋成功。如有需要可追加發送你的聯繫方式，感謝關注')
+                except:
+                    self.post('反饋失敗，請稍後重試')
         elif '@にじ' in message:
-            self.post('都唔知你up乜柒')
+            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
 
-    def private_message_handler(self,message,id_sender):
+    def handle_private_message(self,message,id_sender):
         if '/niji leave' in message:
             self.leave_room()
             return True
@@ -197,15 +212,17 @@ class Bot(object):
                 if search_resp:
                     self.share_music(url=song.url_song, name='%s - %s' % (song.name_song, song.artist_song))
                 else:
-                    self.post(message='穩唔到啊，自己聽罷啦', to=id_sender)
+                    self.post(message='找不到這首歌啊，點別的吧', to=id_sender)
         elif '/help' in message:
             self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
         elif '/feedback' in message:
             if re.findall('/feedback .*', message):
-                feedback = re.findall('/feedback .*', message)[0][10:]
-                f = open('%s.feedback' % time.time(), 'w+')
-                f.write(feedback)
-                f.close()
+                text_feedback = re.findall('/feedback .*', message)[0][10:]
+                try:
+                    self.feedback(text=text_feedback)
+                    self.post(message='反饋成功。如有需要可追加發送你的聯繫方式，感謝關注',to=id_sender)
+                except:
+                    self.post(message='反饋失敗，請稍後重試',to=id_sender)
         elif '@にじ' in message:
-            self.post(message='都唔知你up乜柒', to=id_sender)
+            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
         return False
