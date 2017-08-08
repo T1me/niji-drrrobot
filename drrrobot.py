@@ -168,11 +168,11 @@ class Bot(object):
     def feedback(self,text):
         mail = MIMEText(text, 'plain', 'utf-8')
         mail['Subject'] = '使用者反馈'
-        mail['From'] = email.utils.formataddr(['にじ', 'niji_drrrobot@21cn.com'])
+        mail['From'] = email.utils.formataddr(['にじ', 'niji_drrrobot@126.com'])
         mail['To'] = email.utils.formataddr(['時光會凝聚嗎', 'willtimecondense@qq.com'])
-        server = smtplib.SMTP(host='smtp.21cn.com', port=25)
-        server.login(user='niji_drrrobot@21cn.com', password='niji1997')
-        server.sendmail(from_addr='niji_drrrobot@21cn.com', to_addrs='willtimecondense@qq.com', msg=mail.as_string())
+        server = smtplib.SMTP(host='smtp.126.com', port=25)
+        server.login(user='niji_drrrobot@126.com', password='nijiniji1997')
+        server.sendmail(from_addr='niji_drrrobot@126.com', to_addrs='willtimecondense@qq.com', msg=mail.as_string())
         server.quit()
 
     def handle_message(self,message):
@@ -186,7 +186,7 @@ class Bot(object):
                 else:
                     self.post('找不到這首歌啊，點別的吧')
         elif '/help' in message:
-            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
+            self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
         elif '/feedback' in message:
             if re.findall('/feedback .*', message):
                 text_feedback = re.findall('/feedback .*', message)[0][10:]
@@ -196,7 +196,7 @@ class Bot(object):
                 except:
                     self.post('反饋失敗，請稍後重試')
         elif '@にじ' in message:
-            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
+            self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4')
 
     def handle_private_message(self,message,id_sender):
         if '/niji leave' in message:
@@ -214,7 +214,7 @@ class Bot(object):
                 else:
                     self.post(message='找不到這首歌啊，點別的吧', to=id_sender)
         elif '/help' in message:
-            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
+            self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
         elif '/feedback' in message:
             if re.findall('/feedback .*', message):
                 text_feedback = re.findall('/feedback .*', message)[0][10:]
@@ -224,5 +224,5 @@ class Bot(object):
                 except:
                     self.post(message='反饋失敗，請稍後重試',to=id_sender)
         elif '@にじ' in message:
-            self.post(message='本bot指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
+            self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=id_sender)
         return False
