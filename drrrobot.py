@@ -17,6 +17,7 @@ class Song(object):
         self.name_song = None
         self.artist_song = None
 
+    # search in qq music library
     def qq_search(self):
         search = requests.get('http://s.music.qq.com/fcgi-bin/music_search_new_platform?t=0&n=1&aggr=1&cr=1&loginUin=0&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=jqminiframe.json&needNewCode=0&p=1&catZhida=0&remoteplace=sizer.newclient.next_song&w=%s' % requests.utils.quote(self.keyword))
         resp_search = re.findall('f":"\d+\|.*?\|\d+\|.*?\|', search.text)
@@ -104,30 +105,39 @@ class Bot(object):
         return room.text
 
     def room_update(self,room_text):
+        # update timestamp
         update = re.search('"update":\d+.\d+', room_text).group(0)[9:]
+        # room update request url
         url_room_update = 'https://drrr.com/json.php?update=' + update
         while 1:
             time.sleep(1)
             ru = self.session.get(url_room_update)
             update = re.search('"update":\d+.\d+', ru.text).group(0)[9:]
             url_room_update = 'https://drrr.com/json.php?update=' + update
+            # search "talks" block in room update response
             if 'talks' in ru.text:
                 talks_update = re.findall('{"id".*?"message":".*?"}', re.search('"talks":.*', ru.text).group(0))
+                # talk in "talks" block
                 for tu in talks_update:
                     message = re.search('"message":".*?"', tu).group(0)[11:-1].decode('unicode_escape').encode('utf-8')
-                    info_sender = re.findall('"from":{.*?}',tu)[0]
-                    name_sender = re.findall('"name":".*?"', info_sender)[0][8:-1].decode('unicode_escape')
-                    if name_sender == u'にじ':
-                        continue
-                    id_sender = re.findall('"id":".*?"', info_sender)[0][6:-1]
-                    info_receiver = re.findall('"to":{.*?}', tu)
-                    if info_receiver:
-                        #info_receiver = info_receiver[0].decode('unicode_escape').encode('utf-8')
-                        is_leave = self.handle_private_message(message=message,id_sender=id_sender,name_sender=name_sender)
-                        if is_leave:
-                            return True
-                    else:
-                        self.handle_message(message=message,name_sender=name_sender)
+                    if ('/' in message or '@' in message):
+                        # search "from" block
+                        info_sender = re.findall('"from":{.*?}', tu)
+                        if info_sender:
+                            info_sender = info_sender[0]
+                            name_sender = re.findall('"name":".*?"', info_sender)[0][8:-1].decode('unicode_escape')
+                            if name_sender == u'にじ':
+                                continue
+                            id_sender = re.findall('"id":".*?"', info_sender)[0][6:-1]
+                            # search "to" block in html
+                            info_receiver = re.findall('"to":{.*?}', tu)
+                            if info_receiver:
+                                #info_receiver = info_receiver[0].decode('unicode_escape').encode('utf-8')
+                                is_leave = self.handle_private_message(message=message,id_sender=id_sender,name_sender=name_sender)
+                                if is_leave:
+                                    return True
+                            else:
+                                self.handle_message(message=message,name_sender=name_sender)
             if '"type":"join"' in ru.text:
                 self.post('/me 歡迎光臨，輕食咖啡館')
             ru.close()
@@ -140,12 +150,12 @@ class Bot(object):
                 if timestamp % 600 < 5:
                     give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分', time.localtime(time.time()))
                     self.post('/me %s' % give_time)
-                    time.sleep(580)
+                    time.sleep(590)
             else:
                 if timestamp % 1800 < 5:
                     give_time = time.strftime('現在是中原標準時間 %Y年%m月%d日 %H時%M分', time.localtime(time.time()))
                     self.post('/me %s' % give_time)
-                    time.sleep(1780)
+                    time.sleep(1790)
 
     def tips(self):
         while 1:
