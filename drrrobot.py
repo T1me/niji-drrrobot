@@ -2,12 +2,14 @@
 
 import time
 import requests
+import HTMLParser
 import re
 import random
 import threading
 import smtplib
 import email
 from email.mime.text import MIMEText
+
 
 
 class Song(object):
@@ -23,12 +25,16 @@ class Song(object):
         resp_search = re.findall('f":"\d+\|.*?\|\d+\|.*?\|', search.text)
         if resp_search:
             info_song = resp_search[0]
-            url_song = 'http://ws.stream.qqmusic.qq.com/%s.m4a?fromtag=46' % re.findall('"\d+', info_song)[0][1:]
-            name_song = re.findall('\d\|.*?\|', info_song)[0][2:-1]
-            artist_song = re.findall('\d\|.*?\|', info_song)[1][2:-1]
-            self.url_song = url_song
-            self.name_song = name_song
-            self.artist_song = artist_song
+            list_name_artist = re.findall('\d\|.*?\|', resp_search[0])
+            self.url_song = 'http://ws.stream.qqmusic.qq.com/%s.m4a?fromtag=46' % re.findall('"\d+', info_song)[0][1:]
+            try:
+                self.name_song = HTMLParser.HTMLParser().unescape(list_name_artist[0][2:-1].replace('&amp;','&'))
+            except:
+                self.name_song = list_name_artist[0][2:-1]
+            try:
+                self.artist_song = HTMLParser.HTMLParser().unescape(list_name_artist[1][2:-1].replace('&amp;','&'))
+            except:
+                self.artist_song = list_name_artist[1][2:-1]
             return True
         else:
             return False
@@ -172,7 +178,7 @@ class Bot(object):
                              '願與您分享這夜色，早點休息',
                              '還在熬夜的您，讓我為您點壹盞燈',
                              '今夜微風輕送，伴妳入美夢',
-                             '周末也要早點休息，晚安地球人',
+                             '工作也要早點休息，晚安地球人',
                              '夜深了，常常熬夜可不好哦'
                 ]
                 list_tips_index = int(13 * random.random())
