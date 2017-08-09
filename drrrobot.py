@@ -107,7 +107,7 @@ class Bot(object):
         update = re.search('"update":\d+.\d+', room_text).group(0)[9:]
         url_room_update = 'https://drrr.com/json.php?update=' + update
         while 1:
-            time.sleep(3)
+            time.sleep(1)
             ru = self.session.get(url_room_update)
             update = re.search('"update":\d+.\d+', ru.text).group(0)[9:]
             url_room_update = 'https://drrr.com/json.php?update=' + update
@@ -115,14 +115,19 @@ class Bot(object):
                 talks_update = re.findall('{"id".*?"message":".*?"}', re.search('"talks":.*', ru.text).group(0))
                 for tu in talks_update:
                     message = re.search('"message":".*?"', tu).group(0)[11:-1].decode('unicode_escape').encode('utf-8')
-                    list_id = re.findall('"id":".*?"', tu)
-                    if len(list_id) > 2:
-                        id_sender = list_id[2][6:-1]
-                        is_leave = self.handle_private_message(message=message,id_sender=id_sender)
-                        if is_leave == True:
+                    info_sender = re.findall('"from":{.*?}',tu)[0]
+                    name_sender = re.findall('"name":".*?"', info_sender)[0][8:-1].decode('unicode_escape')
+                    if name_sender == u'にじ':
+                        continue
+                    id_sender = re.findall('"id":".*?"', info_sender)[0][6:-1]
+                    info_receiver = re.findall('"to":{.*?}', tu)
+                    if info_receiver:
+                        #info_receiver = info_receiver[0].decode('unicode_escape').encode('utf-8')
+                        is_leave = self.handle_private_message(message=message,id_sender=id_sender,name_sender=name_sender)
+                        if is_leave:
                             return True
                     else:
-                        self.handle_message(message=message)
+                        self.handle_message(message=message,name_sender=name_sender)
             if '"type":"join"' in ru.text:
                 self.post('/me 歡迎光臨，輕食咖啡館')
             ru.close()
@@ -163,63 +168,68 @@ class Bot(object):
                 list_tips_index = int(13 * random.random())
                 self.post(list_tips[list_tips_index])
 
-    def feedback(self,message,to=''):
+    def feedback(self,message,name_sender,to=''):
         if re.findall('/feedback .*', message):
-            text_feedback = re.findall('/feedback .*', message)[0][10:]
+            text_feedback = name_sender.encode('utf-8') + '： ' +  re.findall('/feedback .*', message)[0][10:]
             try:
                 mail = MIMEText(text_feedback, 'plain', 'utf-8')
                 mail['Subject'] = '使用者反馈'
                 mail['From'] = email.utils.formataddr(['にじ', 'niji_drrrobot@126.com'])
                 mail['To'] = email.utils.formataddr(['時光會凝聚嗎', 'willtimecondense@qq.com'])
                 server = smtplib.SMTP(host='smtp.126.com', port=25)
+                server.debuglevel = 1
                 server.login(user='niji_drrrobot@126.com', password='nijiniji1997')
                 server.sendmail(from_addr='niji_drrrobot@126.com', to_addrs='willtimecondense@qq.com',msg=mail.as_string())
                 server.quit()
                 self.post(message='反饋成功。如有需要可追加發送你的聯繫方式，感謝關注',to=to)
             except:
                 self.post(message='反饋失敗，請稍後重試',to=to)
+        else:
+            self.post(message='喪失好好說話的能力了？ /feedback + 空格 + 建議', to=to)
 
     def help(self,to=''):
-        self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT.E6.8C.87.E4.BB.A4',to=to)
+        self.post(message='本萌妹的指令詳見鏈接',url='https://drrr.wiki/%E8%BC%95%E9%A3%9F%E5%92%96%E5%95%A1%E9%A4%A8#BOT',to=to)
 
-    def music(self,message,to=''):
-            if re.findall('/m .*', message):
-                keyword = re.findall('/m .*', message)[0][3:]
-                song = Song(keyword=keyword)
-                search_resp = song.qq_search()
-                if search_resp:
-                    self.share_music(url=song.url_song, name='%s - %s' % (song.name_song, song.artist_song))
-                else:
-                    self.post(message='找不到這首歌啊，點別的吧',to=to)
+    def music(self,message,name_sender,to=''):
+        if re.findall('/m .*', message):
+            keyword = re.findall('/m .*', message)[0][3:]
+            song = Song(keyword=keyword)
+            search_resp = song.qq_search()
+            if search_resp:
+                self.share_music(url=song.url_song, name='%s - %s by @%s' % (song.name_song, song.artist_song, name_sender))
+            else:
+                self.post(message='找不到這首歌啊，點別的吧', to=to)
+        else:
+            self.post(message='喪失好好說話的能力了？ /m + 空格 + 歌曲', to=to)
 
-    def handle_message(self,message):
+    def handle_message(self,message,name_sender):
         if '/m' in message:
-            t_music = threading.Thread(target=self.music,args=(message,))
+            t_music = threading.Thread(target=self.music,args=(message,name_sender))
             t_music.start()
         elif '/help' in message:
             t_help = threading.Thread(target=self.help)
             t_help.start()
         elif '/feedback' in message:
-            t_feedback = threading.Thread(target=self.feedback,args=(message,))
+            t_feedback = threading.Thread(target=self.feedback,args=(message,name_sender))
             t_feedback.start()
         elif '@にじ' in message:
             t_help = threading.Thread(target=self.help)
             t_help.start()
 
-    def handle_private_message(self,message,id_sender):
+    def handle_private_message(self,message,id_sender,name_sender):
         if '/niji leave' in message:
             self.leave_room()
             return True
         elif '/niji room' in message:
             self.new_host(new_host_id=id_sender)
         elif '/m' in message:
-            t_music = threading.Thread(target=self.music, args=(message,id_sender))
+            t_music = threading.Thread(target=self.music, args=(message,name_sender,id_sender))
             t_music.start()
         elif '/help' in message:
             t_help = threading.Thread(target=self.help,args=(id_sender,))
             t_help.start()
         elif '/feedback' in message:
-            t_feedback = threading.Thread(target=self.feedback,args=(message,id_sender))
+            t_feedback = threading.Thread(target=self.feedback,args=(message,name_sender,id_sender))
             t_feedback.start()
         elif '@にじ' in message:
             t_help = threading.Thread(target=self.help,args=(id_sender,))
