@@ -268,7 +268,7 @@ class Bot(object):
     
     def reply_greeting(self,message):
         if ('早上好' in message or '早安' in message):
-            self.post('早安')
+            self.post('早上好呀')
         elif '中午好' in message:
             self.post('中午好')
         elif '下午好' in message:
@@ -276,4 +276,8 @@ class Bot(object):
         elif ('晚上好' in message or '晚好' in message):
             self.post('晚上好')
         elif '晚安' in message:
-            self.post('晚安')
+            self.post('晚安咯')
+        elif '拜拜' in message:
+            self.post('bye')
+        elif ('再見' in message or '再见' in message):
+            self.post('再見')
