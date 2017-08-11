@@ -10,6 +10,8 @@ import smtplib
 import email
 from email.mime.text import MIMEText
 
+global ts_last_greeting
+ts_last_greeting = 0
 
 
 class Song(object):
@@ -111,6 +113,7 @@ class Bot(object):
         return room.text
 
     def room_update(self,room_text):
+        global ts_last_greeting        
         # update timestamp
         update = re.search('"update":\d+.\d+', room_text).group(0)[9:]
         # room update request url
@@ -144,6 +147,18 @@ class Bot(object):
                                     return True
                             else:
                                 self.handle_message(message=message,name_sender=name_sender)
+                    elif ('好' in message or '安' in message):
+                        global ts_last_greeting
+                        if time.time() - ts_last_greeting > 60:
+                            ts_last_greeting = time.time()                        
+                            # search "from" block
+                            info_sender = re.findall('"from":{.*?}', tu)
+                            if info_sender:
+                                info_sender = info_sender[0]
+                                name_sender = re.findall('"name":".*?"', info_sender)[0][8:-1].decode('unicode_escape')
+                                if name_sender == u'にじ':
+                                    continue                        
+                                self.reply_greeting(message)
             if '"type":"join"' in ru.text:
                 self.post('/me 歡迎光臨，輕食咖啡館')
             ru.close()
@@ -193,7 +208,6 @@ class Bot(object):
                 mail['From'] = email.utils.formataddr(['にじ', 'niji_drrrobot@126.com'])
                 mail['To'] = email.utils.formataddr(['時光會凝聚嗎', 'willtimecondense@qq.com'])
                 server = smtplib.SMTP(host='smtp.126.com', port=25)
-                server.debuglevel = 1
                 server.login(user='niji_drrrobot@126.com', password='nijiniji1997')
                 server.sendmail(from_addr='niji_drrrobot@126.com', to_addrs='willtimecondense@qq.com',msg=mail.as_string())
                 server.quit()
@@ -251,3 +265,15 @@ class Bot(object):
             t_help = threading.Thread(target=self.help,args=(id_sender,))
             t_help.start()
         return False
+    
+    def reply_greeting(self,message):
+        if ('早上好' in message or '早安' in message):
+            self.post('早安')
+        elif '中午好' in message:
+            self.post('中午好')
+        elif '下午好' in message:
+            self.post('下午好')
+        elif ('晚上好' in message or '晚好' in message):
+            self.post('晚上好')
+        elif '晚安' in message:
+            self.post('晚安')
