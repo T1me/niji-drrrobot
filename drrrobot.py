@@ -147,6 +147,7 @@ class Bot(object):
                                     return True
                             else:
                                 self.handle_message(message=message,name_sender=name_sender)
+                            self.write_log(name_sender=name_sender,message=message)
                     elif ('好' in message or '安' in message):
                         global ts_last_greeting
                         if time.time() - ts_last_greeting > 60:
@@ -281,3 +282,9 @@ class Bot(object):
             self.post('bye')
         elif ('再見' in message or '再见' in message):
             self.post('再見')
+            
+    def write_log(self,name_sender,message):
+        logs = open('logs','a')
+        log = '@%s：%s\n%s\n\n' % (name_sender.encode('utf-8'), message, time.strftime('%Y/%m/%d/ %H:%M:%S', time.localtime(time.time())))
+        logs.write(log)
+        logs.close()
