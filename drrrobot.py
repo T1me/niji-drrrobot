@@ -129,7 +129,7 @@ class Bot(object):
                 # talk in "talks" block
                 for tu in talks_update:
                     message = re.search('"message":".*?"', tu).group(0)[11:-1].decode('unicode_escape').encode('utf-8')
-                    if ('/' in message or '@' in message):
+                    if ('/' in message or '@にじ' in message):
                         # search "from" block
                         info_sender = re.findall('"from":{.*?}', tu)
                         if info_sender:
@@ -225,9 +225,11 @@ class Bot(object):
         if re.findall('/m .*', message):
             keyword = re.findall('/m .*', message)[0][3:]
             song = Song(keyword=keyword)
+        for i in range(2):
             search_resp = song.qq_search()
             if search_resp:
                 self.share_music(url=song.url_song, name='%s - %s by @%s' % (song.name_song, song.artist_song, name_sender))
+                break
             else:
                 self.post(message='找不到這首歌啊，點別的吧', to=to)
         else:
