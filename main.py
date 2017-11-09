@@ -12,12 +12,15 @@ url_room = raw_input('Input the [Room URL] ')
 
 niji = drrrobot.Bot(name=name,icon=icon)
 
+# NowTime Thread
 t_give_time = threading.Thread(target=niji.give_time)
 t_give_time.start()
 
+# Night Tips Thread
 t_tips = threading.Thread(target=niji.tips)
 t_tips.start()
 
+# Main
 while 1:
     try:
         if not os.path.isfile(file_name):
